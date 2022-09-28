@@ -1,0 +1,12 @@
+TODO usr/share/doc/aptitude
+debian/tmp/usr/bin/aptitude-*-state-bundle
+debian/tmp/usr/bin/aptitude-changelog-parser
+debian/tmp/usr/share/aptitude/FAQ
+debian/tmp/usr/share/aptitude/NEWS
+debian/tmp/usr/share/aptitude/README*
+debian/tmp/usr/share/aptitude/aptitude-defaults*
+debian/tmp/usr/share/aptitude/help*.txt
+debian/tmp/usr/share/aptitude/mine-help*.txt
+debian/tmp/usr/share/aptitude/section-descriptions
+debian/tmp/usr/share/locale/
+debian/tmp/usr/share/man

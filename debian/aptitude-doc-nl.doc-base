@@ -1,0 +1,9 @@
+Document: aptitude-doc-nl
+Title: Aptitude User's Manual (Dutch)
+Author: Daniel Burrows
+Abstract: This manual describes the usage of the aptitude package manager.
+Section: System/Package Management
+
+Format: HTML
+Index: /usr/share/doc/aptitude/html/nl/index.html
+Files: /usr/share/doc/aptitude/html/nl/*.html

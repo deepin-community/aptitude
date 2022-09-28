@@ -1,0 +1,553 @@
+// util.cc
+//
+//   Copyright (C) 2005, 2007, 2009-2010 Daniel Burrows
+//   Copyright (C) 2014 Daniel Hartwig
+//   Copyright (C) 2015-2019 Manuel A. Fernandez Montecelo
+//
+//   This program is free software; you can redistribute it and/or
+//   modify it under the terms of the GNU General Public License as
+//   published by the Free Software Foundation; either version 2 of
+//   the License, or (at your option) any later version.
+//
+//   This program is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//   General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with this program; see the file COPYING.  If not, write to
+//   the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+//   Boston, MA 02110-1301, USA.
+
+#include "util.h"
+
+#include <aptitude.h>
+
+#include <apt-pkg/error.h>
+#include <apt-pkg/fileutl.h>
+#include <apt-pkg/strutl.h>
+
+#include <cwidget/generic/util/eassert.h>
+
+#include <filesystem>
+#include <mutex>
+
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+using namespace std;
+
+std::string backslash_escape_nonalnum(const std::string &s)
+{
+  std::string rval;
+  for(std::string::const_iterator it = s.begin();
+      it != s.end(); ++it)
+    {
+      if(isalnum(*it))
+	rval.push_back(*it);
+      else
+	{
+	  rval.push_back('\\');
+	  rval.push_back(*it);
+	}
+    }
+
+  return rval;
+}
+
+void stripws(string &s)
+{
+  size_t start = 0;
+  while(start < s.size() && isspace(s[start]))
+    ++start;
+
+  size_t end = s.size();
+  while(end > 0 && isspace(s[end-1]))
+    --end;
+
+  if(start >= end)
+    s.clear();
+  else
+    s.assign(s, start, end-start);
+}
+
+void splitws(const string &s, vector<string> &output, int start, int length)
+{
+  while(start < length)
+    {
+      while(start < length && isspace(s[start]))
+	++start;
+
+      string tmp;
+      // Could support quoting, etc?
+      while(start < length && !isspace(s[start]))
+	tmp += s[start++];
+
+      if(!tmp.empty())
+	output.push_back(tmp);
+    }
+}
+
+void splitws(const string &s, vector<string> &output)
+{
+  return splitws(s, output, 0, s.size());
+}
+
+bool strempty(const char *s)
+{
+  return s == NULL || strcmp(s, "") == 0;
+}
+
+string ssprintf(const char *format, ...)
+{
+  va_list ap;
+
+  va_start(ap, format);
+  string rval = vssprintf(format, ap);
+  va_end(ap);
+
+  return rval;
+}
+
+const int initbufsize=512;
+
+string vssprintf(const char *format, va_list ap)
+{
+  // We need to do this because you can't necessarily re-use a
+  // va_list after stepping down it.
+  va_list ap2;
+  va_copy(ap2, ap);
+  char buf[initbufsize];
+  const int amt = vsnprintf(buf, initbufsize, format, ap);
+
+  if(amt < initbufsize)
+    return buf;
+  else
+    {
+      const int buf2size = amt + 1;
+      char *buf2 = new char[buf2size];
+
+      const int amt2 = vsnprintf(buf2, buf2size, format, ap2);
+
+      eassert(amt2 < buf2size);
+
+      string rval(buf2, amt2);
+
+      delete[] buf2;
+
+      return rval;
+    }
+}
+
+wstring swsprintf(const wchar_t *format, ...)
+{
+  va_list ap;
+
+  va_start(ap, format);
+  wstring rval = vswsprintf(format, ap);
+  va_end(ap);
+
+  return rval;
+}
+
+wstring vswsprintf(const wchar_t *format, va_list ap)
+{
+  wchar_t buf[initbufsize];
+  int amt = vswprintf(buf, initbufsize, format, ap);
+
+  if(amt < initbufsize)
+    return buf;
+  else
+    {
+      wchar_t *buf2 = new wchar_t[amt+1];
+
+      int amt2 = vswprintf(buf2, initbufsize, format, ap);
+
+      eassert(amt2 < amt+1);
+
+      wstring rval(buf2, amt2);
+
+      delete[] buf2;
+
+      return rval;
+    }
+}
+
+string sstrftime(const char *format, const tm *tm)
+{
+  size_t bufsize = 512;
+
+  while(bufsize < 512 * 512)
+    {
+      char *buf = new char[bufsize];
+
+      buf[0] = '\1';
+      size_t result = strftime(buf, bufsize, format, tm);
+
+      if(result == 0 && buf[0] != '\0')
+	{
+	  delete[] buf;
+	  bufsize *= 2;
+	}
+      else
+	{
+	  // Could eliminate this with an "array smart pointer".
+	  string rval(buf);
+	  delete[] buf;
+	  return rval;
+	}
+    }
+
+  return "";
+}
+
+string sstrerror(int errnum)
+{
+  size_t bufsize = 512;
+
+  while(bufsize < 512 * 512)
+    {
+      char *buf = new char[bufsize];
+
+      char *result = strerror_r(errnum, buf, bufsize);
+
+      if(result == NULL)
+	{
+	  int strerror_errno = errno;
+
+	  delete[] buf;
+
+	  if(strerror_errno == EINVAL)
+	    return ssprintf("Invalid error code %d", errnum);
+	  else if(strerror_errno != ERANGE)
+	    return ssprintf("Unexpected error from strerror_r: %d", errnum);
+	  else
+	    bufsize *= 2;
+	}
+      else
+	{
+	  // We need to copy "result", not "buf", because some
+	  // versions of strerror_r can return a static string and
+	  // leave "buf" alone.
+	  string rval(result);
+	  delete[] buf;
+	  return rval;
+	}
+    }
+
+  return "";
+}
+
+string get_homedir()
+{
+  passwd pwbuf;
+  passwd *useless;
+  uid_t myuid = getuid();
+
+#ifdef _SC_GETPW_R_SIZE_MAX
+  long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  char *buf = new char[bufsize];
+
+  if(getpwuid_r(myuid, &pwbuf, buf, bufsize, &useless) != 0)
+    {
+      delete[] buf;
+      return "";
+    }
+  else
+    {
+      string rval = pwbuf.pw_dir;
+      delete[] buf;
+      return rval;
+    }
+#else
+  long bufsize = 512;
+  bool done = false;
+
+  // The 512 * 512 is an arbitrary cutoff to avoid allocating
+  // unbounded amounts of memory when the system doesn't support a way
+  // to directly determine the largest possible password structure.
+  while(bufsize < 512 * 512)
+    {
+      char *buf = new char[bufsize];
+
+      if(getpwuid_r(myuid, &pwbuf, buf, bufsize, &useless) == 0)
+	{
+	  string rval = pwbuf.pw_dir;
+	  delete[] buf;
+	  return rval;
+	}
+      else
+	{
+	  delete[] buf;
+	  bufsize *= 2;
+	}
+    }
+
+  return "";
+#endif
+}
+
+string get_username()
+{
+  passwd pwbuf;
+  passwd *useless;
+  uid_t myuid = getuid();
+
+#ifdef _SC_GETPW_R_SIZE_MAX
+  long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  char *buf = new char[bufsize];
+
+  if(getpwuid_r(myuid, &pwbuf, buf, bufsize, &useless) != 0)
+    {
+      delete[] buf;
+      return "";
+    }
+  else
+    {
+      string rval = pwbuf.pw_name;
+      delete[] buf;
+      return rval;
+    }
+#else
+  long bufsize = 512;
+  bool done = false;
+
+  // The 512 * 512 is an arbitrary cutoff to avoid allocating
+  // unbounded amounts of memory when the system doesn't support a way
+  // to directly determine the largest possible password structure.
+  while(bufsize < 512 * 512)
+    {
+      char *buf = new char[bufsize];
+
+      if(getpwuid_r(myuid, &pwbuf, buf, bufsize, &useless) == 0)
+	{
+	  string rval = pwbuf.pw_name;
+	  delete[] buf;
+	  return rval;
+	}
+      else
+	{
+	  delete[] buf;
+	  bufsize *= 2;
+	}
+    }
+
+  return "";
+#endif
+}
+
+namespace aptitude
+{
+  namespace util
+  {
+    timeval subtract_timevals(const timeval &a, const timeval &b)
+    {
+      timeval rval;
+
+      rval.tv_sec = a.tv_sec - b.tv_sec;
+      if(a.tv_usec < b.tv_usec)
+        {
+          --rval.tv_sec;
+          rval.tv_usec = (a.tv_usec - b.tv_usec) + 1000000;
+        }
+      else
+        rval.tv_usec = a.tv_usec - b.tv_usec;
+
+      return rval;
+    }
+
+    bool remove_non_recursive(const std::string& path, bool ignore_if_not_exists)
+    {
+      int result = std::remove(path.c_str());
+      if (result != 0)
+	{
+	  // error removing file happened
+
+	  if (ignore_if_not_exists && (errno == ENOENT))
+	    {
+	      // that's OK, ignore "file not found"
+	      return true;
+	    }
+	  else
+	    {
+	      _error->Errno("remove_non_recursive",
+			    _("Unable to remove \"%s\": %s"),
+			    path.c_str(),
+			    sstrerror(errno).c_str());
+	      return false;
+	    }
+	}
+      else
+	{
+	  return true;
+	}
+    }
+
+    bool recursive_remdir(const std::string &dirname)
+    {
+      struct stat stbuf;
+
+      if(lstat(dirname.c_str(), &stbuf) != 0)
+	_error->Errno("recursive_remdir", _("Unable to stat \"%s\""), dirname.c_str());
+
+      if(S_ISLNK(stbuf.st_mode) || !S_ISDIR(stbuf.st_mode))
+	{
+	  if(unlink(dirname.c_str()) != 0)
+	    {
+	      _error->Errno("recursive_remdir", _("Unable to remove \"%s\""), dirname.c_str());
+	      return false;
+	    }
+	  else
+	    return true;
+	}
+
+      DIR *dir = opendir(dirname.c_str());
+      if(dir == NULL)
+	{
+	  _error->Errno("recursive_remdir", _("Unable to list files in \"%s\""), dirname.c_str());
+	  return false;
+	}
+
+      bool rval = true;
+      errno = 0;
+      for (dirent* dent = readdir(dir); dent != NULL; dent = readdir(dir)) {
+	std::string d_name = dent->d_name;
+	if (d_name != "." && d_name != "..") {
+	  rval = (rval && recursive_remdir(dirname + "/" + d_name));
+	}
+      }
+      if (errno != 0)
+	{
+	  _error->Errno("recursive_remdir", _("Failure reading directory \"%s\""), dirname.c_str());
+	  rval = false;
+	}
+
+      if(closedir(dir) != 0)
+	{
+	  _error->Errno("recursive_remdir", _("Failure closing directory \"%s\""), dirname.c_str());
+	  rval = false;
+	}
+
+      if(rmdir(dirname.c_str()) != 0)
+	{
+	  _error->Errno("recursive_remdir", _("Unable to remove directory \"%s\""), dirname.c_str());
+	  rval = false;
+	}
+
+      return rval;
+    }
+
+    // From apt-pkg/contrib/fileutl.cc (CreateDirectory).
+    bool mkdir_parents(const std::string &dirname, mode_t mode)
+    {
+      if(dirname.empty() == true)
+        return false;
+
+      const vector<string> dirs = VectorizeString(dirname, '/');
+      string progress = "";
+      for(vector<string>::const_iterator d = dirs.begin();
+          d != dirs.end();
+          ++d)
+        {
+          if(d->empty() == true)
+            continue;
+
+          progress.append("/").append(*d);
+          if(DirectoryExists(progress) == true)
+            continue;
+
+          if(mkdir(progress.c_str(), mode) != 0)
+            return false;
+        }
+      return true;
+    }
+
+    bool is_dumb_terminal()
+    {
+      bool dumbTERM = false;
+
+      const char* TERM = getenv("TERM");
+      if (TERM && string("dumb") == TERM)
+	{
+	  dumbTERM = true;
+	}
+
+      return dumbTERM;
+    }
+
+    void print_ncurses_dumb_terminal()
+    {
+      fprintf(stderr, _("%s cannot run in ncurses mode with terminal type \"dumb\"\n"), PACKAGE);
+    }
+
+    /// Helper function for create_temporary_changelog_dir()
+    static std::vector<std::string> temp_dirs_to_delete;
+    std::mutex mutex_temp_dirs_to_delete;
+    static bool registered_delete_temp_dirs_on_exit = false;
+    void delete_temp_dirs_on_exit()
+    {
+      std::lock_guard<std::mutex> l { mutex_temp_dirs_to_delete };
+
+      for (auto d : temp_dirs_to_delete)
+	{
+	  recursive_remdir(d);
+	}
+    }
+
+    std::string create_temporary_changelog_dir()
+    {
+      namespace fs = std::filesystem;
+
+      fs::path dest_dir;
+      try {
+	dest_dir = fs::temp_directory_path() / fs::path("aptitude-download-XXXXXX");
+      } catch (const std::exception& e) {
+	fprintf(stderr, _("Problem creating temporary dir: %s\n"), e.what());
+	return {};
+      }
+
+      try {
+
+	// create and set permissions
+	char* tmpdir = strdup(dest_dir.c_str());
+	if (tmpdir)
+	  tmpdir = mkdtemp(tmpdir);
+	bool tmp_dir_ok = (tmpdir != nullptr);
+	if (!tmp_dir_ok)
+	  return {};
+
+	dest_dir = tmpdir;
+	fs::permissions(dest_dir,
+			fs::perms::owner_all);
+
+	// register for deletion
+	{
+	  std::lock_guard<std::mutex> l { mutex_temp_dirs_to_delete };
+	  temp_dirs_to_delete.push_back(dest_dir.string());
+	}
+	if (!registered_delete_temp_dirs_on_exit)
+	  {
+	    atexit(delete_temp_dirs_on_exit);
+	    registered_delete_temp_dirs_on_exit = true;
+	  }
+
+	// return dir if everything OK
+	return dest_dir.string();
+
+      } catch (...) {
+	return {};
+      }
+    }
+  }
+}

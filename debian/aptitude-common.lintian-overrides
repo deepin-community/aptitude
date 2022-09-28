@@ -1,0 +1,8 @@
+# Aptitude looks for inline documentation in /usr/share/aptitude/
+aptitude-common: package-contains-documentation-outside-usr-share-doc usr/share/aptitude/README*
+aptitude-common: package-contains-documentation-outside-usr-share-doc usr/share/aptitude/*help*.txt
+
+# These are debugging tools and do nothing but capture the state of
+# the dpkg database whatever it looks like.
+aptitude-common: uses-dpkg-database-directly usr/bin/aptitude-create-state-bundle
+aptitude-common: uses-dpkg-database-directly usr/bin/aptitude-run-state-bundle

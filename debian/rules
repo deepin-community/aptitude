@@ -1,0 +1,71 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+  DEB_CXXFLAGS_MAINT_APPEND += -fno-inline
+endif
+
+ifeq ($(DEB_BUILD_GNU_CPU), sw_64)
+  DEB_CXXFLAGS_MAINT_APPEND += -O1
+endif
+
+export DEB_CXXFLAGS_MAINT_APPEND
+
+ifneq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+  CONFIGURE_OPTS_TESTS = --disable-tests
+endif
+
+BUILDDIR=build
+
+
+%:
+	dh $@ --builddirectory=$(BUILDDIR) --dbgsym-migration=aptitude-dbg
+
+
+# -indep will clear the flags if we are doing full (arch+indep) build
+override_dh_auto_configure-arch:  CONFIGURE_OPTS_DOCS = --disable-docs
+override_dh_auto_configure-indep: CONFIGURE_OPTS_DOCS =
+
+override_dh_auto_configure-arch override_dh_auto_configure-indep:
+	dh_auto_configure -- \
+	    --htmldir='$${docdir}/html' \
+	    --program-transform='s&aptitude$$&aptitude-curses&' \
+	    --disable-boost-lib-checks \
+	    $(CONFIGURE_OPTS_DOCS) $(CONFIGURE_OPTS_TESTS)
+
+override_dh_auto_test-arch:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+        # Run the unit tests, but protect against Boost.Test's flakiness.
+	(cd $(BUILDDIR) && $(MAKE) -C tests check || (cd tests && ./cppunit_test))
+endif
+
+override_dh_auto_test-indep:
+#empty
+
+override_dh_installdocs-arch:
+	dh_installdocs -paptitude -XREADME.Debian
+
+override_dh_installdocs-indep:
+	dh_installdocs
+
+	@pkgs=`dh_listpackages | grep ^aptitude-doc`; \
+	for pkg in $$pkgs; do \
+	  echo "  installing html for $$pkg"; \
+	  ll=`echo $$pkg | sed -e 's/^aptitude-doc-//'`; \
+	  mkdir -p "debian/$$pkg/usr/share/doc/aptitude/html"; \
+	  cp -Rf "debian/tmp/usr/share/doc/aptitude/html/$$ll" \
+	      "debian/$$pkg/usr/share/doc/aptitude/html/$$ll"; \
+	done
+
+# Disable dh_missing due to the manual installation hack above.
+override_dh_missing:
+
+override_dh_auto_install:
+	dh_auto_install
+
+        # Special case for "static" man page, move to program name
+	(cd debian/tmp/usr/share/man/gl/man8/ && mv aptitude.8 aptitude-curses.8)

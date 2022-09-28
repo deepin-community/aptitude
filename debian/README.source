@@ -1,0 +1,22 @@
+The upstream and Debian packaging Git repository for aptitude is at:
+
+  https://salsa.debian.org/apt-team/aptitude.git
+
+and can be browsed online at:
+
+  https://salsa.debian.org/apt-team/aptitude/
+
+Upstream development occurs on the master branch. Upstream release
+tags are pure version numbers.
+
+For the Debian packaging, a git-buildpackage + pristine-tar style
+layout and tagging is used:
+
+Upstream tar balls for the Debian packaging are imported into the
+upstream-sid and pristine-tar branches and are tagged with the prefix
+"upstream/".
+
+Debian packaging is done in the debian-sid branch and Debian package
+releases are tagged with the "debian/" prefix.
+
+ -- Axel Beckert <abe@debian.org>, Thu, 21 May 2020 04:14:46 +0200

@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+eval {
+    require Dpkg::Changelog::Parse;
+    Dpkg::Changelog::Parse->import();
+    1;
+} or do {
+    warn "warning: Dpkg::Changelog::Parse not present, install libdpkg-perl\n";
+    exit 0;
+};
+
+# Usage: aptitude-changelog-parser [<filename> [<from-version>]]
+
+my %opts;
+if (scalar @ARGV >= 1) {
+    $opts{file} = shift @ARGV;
+}
+if (scalar @ARGV == 1) {
+    $opts{from} = $ARGV[0];
+} else {
+    $opts{all} = undef;
+}
+
+print join "\n", changelog_parse(format => 'rfc822', %opts);

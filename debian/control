@@ -1,0 +1,227 @@
+Source: aptitude
+Section: admin
+Priority: optional
+Maintainer: Aptitude Development Team <aptitude-devel@lists.alioth.debian.org>
+Uploaders: Manuel A. Fernandez Montecelo <mafm@debian.org>,
+           Axel Beckert <abe@debian.org>
+Build-Depends: autoconf-archive,
+               debhelper-compat (= 13),
+               dpkg-dev (>= 1.16.1),
+               gettext,
+               libapt-pkg-dev (>= 1.1),
+               libboost-dev,
+               libboost-iostreams-dev,
+               libboost-system-dev,
+               libboost-test-dev,
+               libcppunit-dev,
+               libcwidget-dev (>= 0.5.18),
+               libgmock-dev (>= 1.8.0-9),
+               libgtest-dev (>= 1.8.0-9),
+               libncurses-dev (>= 6.1+20180210),
+               libsigc++-2.0-dev,
+               libsqlite3-dev,
+               libxapian-dev,
+               pkg-config
+Build-Depends-Indep: docbook-xml,
+                     docbook-xsl,
+                     elinks,
+                     librsvg2-bin,
+                     po4a (<< 0.58~) | po4a (>= 0.59.1~),
+                     xsltproc
+Vcs-Git: https://salsa.debian.org/apt-team/aptitude.git -b debian-sid
+Vcs-Browser: https://salsa.debian.org/apt-team/aptitude
+Standards-Version: 4.5.1
+Homepage: https://wiki.debian.org/Aptitude
+Rules-Requires-Root: no
+
+Package: aptitude
+Architecture: any
+Multi-Arch: foreign
+Depends: aptitude-common (= ${source:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Recommends: libdpkg-perl,
+            sensible-utils
+Suggests: apt-xapian-index,
+          aptitude-doc-en | aptitude-doc,
+          debtags,
+          tasksel
+Description: terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ aptitude is also Y2K-compliant, non-fattening, naturally cleansing,
+ and housebroken.
+
+Package: aptitude-common
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Recommends: aptitude
+Replaces: aptitude (<< 0.8.10-4)
+Breaks: aptitude (<< 0.8.10-4)
+Description: architecture independent files for the aptitude package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the data files and translations used by
+ aptitude.
+
+Package: aptitude-doc-cs
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Czech manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Czech version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-en
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: English manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the English version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-es
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Spanish manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Spanish version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-fi
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Finnish manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Finnish version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-fr
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: French manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the French version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-it
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Italian manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Italian version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-ja
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Japanese manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Japanese version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-nl
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Dutch manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Dutch version of the aptitude user's
+ manual in HTML format.
+
+Package: aptitude-doc-ru
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Provides: aptitude-doc
+Depends: ${misc:Depends}
+Suggests: aptitude
+Description: Russian manual for aptitude, a terminal-based package manager
+ aptitude is a package manager with a number of useful features,
+ including: a mutt-like syntax for matching packages in a flexible
+ manner, dselect-like persistence of user actions, the ability to
+ retrieve and display the Debian changelog of most packages, and a
+ command-line mode similar to that of apt-get.
+ .
+ This package contains the Russian version of the aptitude user's
+ manual in HTML format.
