@@ -1,2 +1,5 @@
 fix-ftbfs-with-gcc-10.patch
 apt_2.1.19_compatibility.patch
+fix-FTBFS-1011681.patch
+fix-bashism-related-issue-with-fixman-scripts.patch
+fix-ftbfs-with-gcc-12.patch

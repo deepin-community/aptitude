@@ -9,10 +9,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
   DEB_CXXFLAGS_MAINT_APPEND += -fno-inline
 endif
 
-ifeq ($(DEB_BUILD_GNU_CPU), sw_64)
-  DEB_CXXFLAGS_MAINT_APPEND += -O1
-endif
-
 export DEB_CXXFLAGS_MAINT_APPEND
 
 ifneq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
