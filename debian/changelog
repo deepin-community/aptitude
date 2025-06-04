@@ -1,3 +1,9 @@
+aptitude (0.8.13.1-7) unstable; urgency=medium
+
+  * update version for rebuild.
+
+ -- liujianqiang <liujianqiang@uniontech.com>  Wed, 04 Jun 2025 09:43:59 +0800
+
 aptitude (0.8.13.1-5deepin) unstable; urgency=medium
 
   [ LiChengGang ]
@@ -5,7 +11,7 @@ aptitude (0.8.13.1-5deepin) unstable; urgency=medium
 
  -- LiChengGang <lichenggang@uniontech.com>  Tue, 16 Jan 2024 00:03:06 +0800
 
-aptitude (0.8.13.1-1+dde) UNRELEASED; urgency=medium
+aptitude (0.8.13.1-1+dde) unstable; urgency=medium
 
   * update
 
