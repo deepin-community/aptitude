@@ -1,3 +1,9 @@
+aptitude (0.8.13.1-7deepin1) unstable; urgency=medium
+
+  * update changelog.
+
+ -- lichenggang <lichenggang@deepin.org>  Wed, 04 Jun 2025 09:51:28 +0800
+
 aptitude (0.8.13-7) unstable; urgency=medium
 
   * Team upload.
