@@ -21,12 +21,12 @@ Build-Depends: autoconf-archive,
                libsigc++-2.0-dev,
                libsqlite3-dev,
                libxapian-dev,
-               pkg-config
+               pkgconf
 Build-Depends-Indep: docbook-xml,
                      docbook-xsl,
                      elinks,
                      librsvg2-bin,
-                     po4a (<< 0.58~) | po4a (>= 0.59.1~),
+                     po4a,
                      xsltproc
 Vcs-Git: https://salsa.debian.org/apt-team/aptitude.git -b debian-sid
 Vcs-Browser: https://salsa.debian.org/apt-team/aptitude
